@@ -6,6 +6,7 @@ class MockSet {
   final String name;
   final Map<String, dynamic> endpoints;
   String selected;
+  bool disable = false;
 
   MockSet(this.path, this.name, this.endpoints, this.selected);
 
@@ -26,5 +27,17 @@ class MockSet {
       print(e);
     }
     return null;
+  }
+
+  Future<bool> save() async {
+    try {
+      final file = File(path);
+      final text = const JsonEncoder.withIndent('    ').convert(endpoints);
+      await file.writeAsString(text);
+      return true;
+    } catch (e) {
+      print(e);
+    }
+    return false;
   }
 }

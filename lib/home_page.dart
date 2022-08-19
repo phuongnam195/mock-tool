@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:json_editor/json_editor.dart';
 
 import 'mock_set.dart';
 
@@ -22,7 +23,6 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     _exportNameController.text = 'data';
-    _pickExportFolder();
     super.initState();
   }
 
@@ -32,152 +32,181 @@ class _HomePageState extends State<HomePage> {
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(children: [
-          Row(
-            children: [
-              Text(
-                _exportFolder ?? 'Chưa chọn',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: _exportFolder == null ? Colors.red : Colors.black,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(width: 25),
-              Expanded(
-                child: TextField(
-                  controller: _exportNameController,
-                  decoration:
-                      const InputDecoration(labelText: 'Tên tập tin xuất:'),
-                ),
-              ),
-              const Text('.json',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  )),
-              const SizedBox(width: 30),
-              ElevatedButton(
-                child: const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8),
-                    child: Text(
-                      'Chọn thư mục',
-                      style: TextStyle(fontSize: 16),
-                    )),
-                onPressed: _pickExportFolder,
-              )
-            ],
-          ),
+          _wxHeader(),
           const SizedBox(height: 20),
-          Expanded(
-            child: SizedBox(
-              height: 400,
-              child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _mockSets.length + 1,
-                  padding: const EdgeInsets.all(10),
-                  itemBuilder: (ctx, i) {
-                    return SizedBox(
-                      width: 300,
-                      child: (i < _mockSets.length)
-                          ? DottedBorder(
-                              color: Colors.grey[700]!,
-                              strokeWidth: 3,
-                              dashPattern: const [10, 6],
-                              radius: const Radius.circular(10),
-                              child: Stack(children: [
-                                Container(
-                                    color: Colors.amber[50],
-                                    child: Column(
-                                      children: [
-                                        const SizedBox(height: 20),
-                                        Text(
-                                          _mockSets[i].name,
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 20),
-                                        ),
-                                        Expanded(
-                                          child: SingleChildScrollView(
-                                            child: Padding(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      vertical: 5),
-                                              child: Column(children: [
-                                                for (var e in _mockSets[i]
-                                                    .endpoints
-                                                    .entries)
-                                                  ListTile(
-                                                    onTap: () {
-                                                      _onSelect(i, e.key);
-                                                    },
-                                                    title: Text(e.key),
-                                                    leading: Radio<String>(
-                                                      value: e.key,
-                                                      groupValue:
-                                                          _mockSets[i].selected,
-                                                      onChanged: (value) {
-                                                        _onSelect(i, value);
-                                                      },
-                                                    ),
-                                                  ),
-                                              ]),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    )),
-                                Positioned(
-                                    top: 0,
-                                    right: 0,
-                                    child: IconButton(
-                                      icon: const Icon(
-                                        Icons.close,
-                                        color: Colors.red,
-                                      ),
-                                      onPressed: () {
-                                        setState(() {
-                                          _mockSets.removeAt(i);
-                                        });
-                                      },
-                                    )),
-                              ]),
-                            )
-                          : InkWell(
-                              onTap: _addMockSet,
-                              child: DottedBorder(
-                                color: Colors.grey[700]!,
-                                strokeWidth: 3,
-                                dashPattern: const [10, 6],
-                                radius: const Radius.circular(10),
-                                child: Container(
-                                    color: Colors.green[50],
-                                    child: const Center(
-                                        child: Icon(Icons.add, size: 60))),
-                              ),
-                            ),
-                    );
-                  }),
-            ),
-          ),
+          Expanded(child: _wxListMockSet()),
           const SizedBox(height: 20),
-          // ElevatedButton(
-          //   child: const Padding(
-          //     padding: EdgeInsets.symmetric(vertical: 8, horizontal: 20),
-          //     child: Text(
-          //       'XUẤT',
-          //       style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-          //     ),
-          //   ),
-          //   // onPressed: _export,
-          //   onPressed: _export,
-          // ),
-          const SizedBox(height: 30),
+          // _wxExportButton(),
+          const SizedBox(height: 20),
         ]),
       ),
     );
   }
 
-  _pickExportFolder() async {
+  Widget _wxExportButton() {
+    return ElevatedButton(
+      child: const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8, horizontal: 20),
+        child: Text(
+          'XUẤT',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+        ),
+      ),
+      // onPressed: _export,
+      onPressed: _onExport,
+    );
+  }
+
+  Widget _wxListMockSet() {
+    return SizedBox(
+      height: 400,
+      child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          itemCount: _mockSets.length + 1,
+          padding: const EdgeInsets.all(10),
+          itemBuilder: (ctx, i) {
+            return Container(
+              padding: const EdgeInsets.all(4),
+              width: 350,
+              child: (i < _mockSets.length)
+                  ? DottedBorder(
+                      color: Colors.grey[700]!,
+                      strokeWidth: 3,
+                      dashPattern: const [10, 6],
+                      radius: const Radius.circular(10),
+                      child: Stack(children: [
+                        _wxMockSetCard(i),
+                        Positioned(top: 0, right: 0, child: _wxDeleteButton(i)),
+                      ]),
+                    )
+                  : _wxAddMockSet(),
+            );
+          }),
+    );
+  }
+
+  Widget _wxAddMockSet() {
+    return InkWell(
+      onTap: _onAddMockSet,
+      child: DottedBorder(
+        color: Colors.grey[700]!,
+        strokeWidth: 3,
+        dashPattern: const [10, 6],
+        radius: const Radius.circular(10),
+        child: Container(
+            color: Colors.green[50],
+            child: const Center(child: Icon(Icons.add, size: 60))),
+      ),
+    );
+  }
+
+  Widget _wxMockSetCard(int i) {
+    return Container(
+        color: Colors.amber[50],
+        child: Column(
+          children: [
+            const SizedBox(height: 20),
+            Text(
+              _mockSets[i].name,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 5),
+                  child: Column(children: [
+                    for (var e in _mockSets[i].endpoints.entries)
+                      RadioListTile<String>(
+                        title: Text(e.key),
+                        value: e.key,
+                        groupValue: _mockSets[i].selected,
+                        onChanged: (value) {
+                          _onSelect(i, value);
+                        },
+                        secondary: IconButton(
+                          icon: const Icon(Icons.edit),
+                          onPressed: () => _onEditEndpoint(i, e.key),
+                        ),
+                      ),
+                  ]),
+                ),
+              ),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                IconButton(
+                  icon: Icon(
+                    _mockSets[i].disable
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
+                    color:
+                        _mockSets[i].disable ? Colors.yellow[900] : Colors.grey,
+                    size: 30,
+                  ),
+                  onPressed: () {
+                    _onToggleDisableMockSet(i);
+                  },
+                  tooltip: _mockSets[i].disable ? 'Bật' : 'Tắt',
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+          ],
+        ));
+  }
+
+  Widget _wxDeleteButton(int i) {
+    return IconButton(
+      icon: const Icon(
+        Icons.cancel,
+        color: Colors.red,
+      ),
+      onPressed: () {
+        _onDeleteMockSet(i);
+      },
+      tooltip: 'Xóa',
+    );
+  }
+
+  Widget _wxHeader() {
+    return Row(
+      children: [
+        Text(
+          _exportFolder ?? 'Chưa chọn',
+          style: TextStyle(
+            fontSize: 16,
+            color: _exportFolder == null ? Colors.red : Colors.black,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(width: 25),
+        Expanded(
+          child: TextField(
+            controller: _exportNameController,
+            decoration: const InputDecoration(labelText: 'Tên tập tin xuất:'),
+          ),
+        ),
+        const Text('.json',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            )),
+        const SizedBox(width: 30),
+        ElevatedButton(
+          child: const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                'Chọn thư mục',
+                style: TextStyle(fontSize: 16),
+              )),
+          onPressed: _onPickExportFolder,
+        )
+      ],
+    );
+  }
+
+  _onPickExportFolder() async {
     _exportFolder = await FilePicker.platform
         .getDirectoryPath(dialogTitle: 'Chọn thư mục xuất file JSON');
     if (_exportFolder != null) {
@@ -186,25 +215,28 @@ class _HomePageState extends State<HomePage> {
     setState(() {});
   }
 
-  _addMockSet() async {
+  _onAddMockSet() async {
     final result = await FilePicker.platform
         .pickFiles(allowMultiple: true, allowedExtensions: ['json']);
+    await _addMockSet(result?.paths);
+  }
 
-    if (result != null) {
-      for (var path in result.paths) {
-        final mockSet = await MockSet.fromFile(path);
-        if (mockSet != null) {
-          _mockSets.add(mockSet);
-        }
+  _addMockSet(List<String?>? paths) async {
+    if (paths == null) return;
+
+    for (var path in paths) {
+      final mockSet = await MockSet.fromFile(path);
+      if (mockSet != null) {
+        _mockSets.add(mockSet);
       }
     }
 
     setState(() {});
 
-    _export();
+    _onExport();
   }
 
-  _export() async {
+  _onExport() async {
     if (_exportFolder == null) {
       ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Chưa chọn thư mục xuất file')));
@@ -214,7 +246,9 @@ class _HomePageState extends State<HomePage> {
     try {
       Map<String, dynamic> result = {};
       for (var mockSet in _mockSets) {
-        result[mockSet.name] = mockSet.endpoints[mockSet.selected];
+        if (!mockSet.disable) {
+          result[mockSet.name] = mockSet.endpoints[mockSet.selected];
+        }
       }
       final text = const JsonEncoder.withIndent('    ').convert(result);
 
@@ -236,46 +270,80 @@ class _HomePageState extends State<HomePage> {
       setState(() {
         _mockSets[i].selected = value;
       });
-      _export();
+      _onExport();
     }
   }
-}
 
-class MockSetCard extends StatefulWidget {
-  const MockSetCard(
-    this.mockSet, {
-    Key? key,
-  }) : super(key: key);
+  _onDeleteMockSet(int i) {
+    setState(() {
+      _mockSets.removeAt(i);
+    });
+    _onExport();
+  }
 
-  final MockSet mockSet;
+  _onToggleDisableMockSet(int i) {
+    setState(() {
+      _mockSets[i].disable = !_mockSets[i].disable;
+    });
+    _onExport();
+  }
 
-  @override
-  State<MockSetCard> createState() => _MockSetCardState();
-}
+  _onEditEndpoint(int i, String key) {
+    String json = const JsonEncoder.withIndent('    ')
+        .convert(_mockSets[i].endpoints[key]);
 
-class _MockSetCardState extends State<MockSetCard> {
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        children: widget.mockSet.endpoints.entries
-            .map(
-              (e) => ListTile(
-                title: Text(e.key),
-                leading: Radio<String>(
-                  value: widget.mockSet.selected,
-                  groupValue: e.key,
-                  onChanged: (value) {
-                    if (value != null && value != widget.mockSet.selected) {
-                      setState(() {
-                        widget.mockSet.selected = value;
-                      });
-                    }
-                  },
-                ),
+    String edittedJson = json;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: Text(
+          key,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+        content: JsonEditor.string(
+          jsonString: json,
+          onValueChanged: (value) {
+            edittedJson = JsonElement.fromJson(value.toJson()).toString();
+          },
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.all(6),
+            child: TextButton(
+              child: const Padding(
+                padding: EdgeInsets.symmetric(vertical: 6, horizontal: 10),
+                child: Text('Hủy'),
               ),
-            )
-            .toList(),
+              style: TextButton.styleFrom(
+                textStyle: const TextStyle(fontSize: 18),
+                primary: Colors.grey,
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(6),
+            child: TextButton(
+              child: const Padding(
+                padding: EdgeInsets.symmetric(vertical: 6, horizontal: 10),
+                child: Text('Lưu'),
+              ),
+              style: TextButton.styleFrom(
+                textStyle:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+              onPressed: () {
+                _mockSets[i].endpoints[key] = jsonDecode(edittedJson);
+                _mockSets[i].save();
+                Navigator.of(context).pop();
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
