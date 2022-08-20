@@ -1,5 +1,5 @@
 name: mock_tool
-description: A new Flutter project.
+description: JSON mock manager with json_server
 
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.

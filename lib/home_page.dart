@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:json_editor/json_editor.dart';
 
 import 'mock_set.dart';
+import 'utils.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -53,7 +54,7 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
       // onPressed: _export,
-      onPressed: _onExport,
+      onPressed: _export,
     );
   }
 
@@ -93,9 +94,7 @@ class _HomePageState extends State<HomePage> {
         strokeWidth: 3,
         dashPattern: const [10, 6],
         radius: const Radius.circular(10),
-        child: Container(
-            color: Colors.green[50],
-            child: const Center(child: Icon(Icons.add, size: 60))),
+        child: Container(color: Colors.green[50], child: const Center(child: Icon(Icons.add, size: 60))),
       ),
     );
   }
@@ -137,11 +136,8 @@ class _HomePageState extends State<HomePage> {
               children: [
                 IconButton(
                   icon: Icon(
-                    _mockSets[i].disable
-                        ? Icons.visibility_off_outlined
-                        : Icons.visibility_outlined,
-                    color:
-                        _mockSets[i].disable ? Colors.yellow[900] : Colors.grey,
+                    _mockSets[i].disable ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                    color: _mockSets[i].disable ? Colors.yellow[900] : Colors.grey,
                     size: 30,
                   ),
                   onPressed: () {
@@ -182,10 +178,7 @@ class _HomePageState extends State<HomePage> {
         ),
         const SizedBox(width: 25),
         Expanded(
-          child: TextField(
-            controller: _exportNameController,
-            decoration: const InputDecoration(labelText: 'Tên tập tin xuất:'),
-          ),
+          child: TextField(controller: _exportNameController),
         ),
         const Text('.json',
             style: TextStyle(
@@ -201,23 +194,23 @@ class _HomePageState extends State<HomePage> {
                 style: TextStyle(fontSize: 16),
               )),
           onPressed: _onPickExportFolder,
+          style: ElevatedButton.styleFrom(elevation: 0),
         )
       ],
     );
   }
 
   _onPickExportFolder() async {
-    _exportFolder = await FilePicker.platform
-        .getDirectoryPath(dialogTitle: 'Chọn thư mục xuất file JSON');
+    _exportFolder = await FilePicker.platform.getDirectoryPath(dialogTitle: 'Chọn thư mục xuất file JSON');
     if (_exportFolder != null) {
-      _exportFolder = _exportFolder! + '\\';
+      _exportFolder = _exportFolder! + Utils.pathSep;
     }
     setState(() {});
   }
 
   _onAddMockSet() async {
-    final result = await FilePicker.platform
-        .pickFiles(allowMultiple: true, allowedExtensions: ['json']);
+    final result = await FilePicker.platform.pickFiles(allowMultiple: true, allowedExtensions: ['json'],
+    dialogTitle: 'Chọn tập tin JSON');
     await _addMockSet(result?.paths);
   }
 
@@ -233,13 +226,12 @@ class _HomePageState extends State<HomePage> {
 
     setState(() {});
 
-    _onExport();
+    _export();
   }
 
-  _onExport() async {
+  _export() async {
     if (_exportFolder == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Chưa chọn thư mục xuất file')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Chưa chọn thư mục xuất file')));
       return;
     }
 
@@ -250,10 +242,9 @@ class _HomePageState extends State<HomePage> {
           result[mockSet.name] = mockSet.endpoints[mockSet.selected];
         }
       }
-      final text = const JsonEncoder.withIndent('    ').convert(result);
+      final text = Utils.formatJson(result);
 
-      final exportFile =
-          File(_exportFolder! + _exportNameController.text + '.json');
+      final exportFile = File(_exportFolder! + _exportNameController.text + '.json');
 
       await exportFile.writeAsString(text);
     } catch (e) {
@@ -270,7 +261,7 @@ class _HomePageState extends State<HomePage> {
       setState(() {
         _mockSets[i].selected = value;
       });
-      _onExport();
+      _export();
     }
   }
 
@@ -278,19 +269,18 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _mockSets.removeAt(i);
     });
-    _onExport();
+    _export();
   }
 
   _onToggleDisableMockSet(int i) {
     setState(() {
       _mockSets[i].disable = !_mockSets[i].disable;
     });
-    _onExport();
+    _export();
   }
 
   _onEditEndpoint(int i, String key) {
-    String json = const JsonEncoder.withIndent('    ')
-        .convert(_mockSets[i].endpoints[key]);
+    String json = Utils.formatJson(_mockSets[i].endpoints[key]);
 
     String edittedJson = json;
 
@@ -333,12 +323,12 @@ class _HomePageState extends State<HomePage> {
                 child: Text('Lưu'),
               ),
               style: TextButton.styleFrom(
-                textStyle:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
               ),
               onPressed: () {
                 _mockSets[i].endpoints[key] = jsonDecode(edittedJson);
                 _mockSets[i].save();
+                _export();
                 Navigator.of(context).pop();
               },
             ),

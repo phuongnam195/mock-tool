@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'utils.dart';
+
 class MockSet {
   final String path;
   final String name;
@@ -19,7 +21,7 @@ class MockSet {
 
       Map<String, dynamic> endpoints = jsonDecode(text);
 
-      String name = file.path.split('\\').last;
+      String name = file.path.split(Utils.pathSep).last;
       name = name.substring(0, name.lastIndexOf('.'));
 
       return MockSet(path, name, endpoints, endpoints.keys.first);
@@ -32,7 +34,7 @@ class MockSet {
   Future<bool> save() async {
     try {
       final file = File(path);
-      final text = const JsonEncoder.withIndent('    ').convert(endpoints);
+      final text = Utils.formatJson(endpoints);
       await file.writeAsString(text);
       return true;
     } catch (e) {
