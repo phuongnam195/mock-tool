@@ -4,7 +4,9 @@ import 'dart:io';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:json_editor/json_editor.dart';
+import 'package:network_info_plus/network_info_plus.dart';
 
 import 'mock_set.dart';
 import 'utils.dart';
@@ -20,10 +22,14 @@ class _HomePageState extends State<HomePage> {
   final _exportNameController = TextEditingController();
   final List<MockSet> _mockSets = [];
   String? _exportFolder;
+  String? _host;
 
   @override
   void initState() {
     _exportNameController.text = 'data';
+    NetworkInfo().getWifiIP().then((ip) => setState((() {
+          if (ip != null) _host = 'http://$ip:3000/';
+        })));
     super.initState();
   }
 
@@ -37,11 +43,23 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(height: 20),
           Expanded(child: _wxListMockSet()),
           const SizedBox(height: 20),
+          // _wxIpAddress(),
           // _wxExportButton(),
           const SizedBox(height: 20),
         ]),
       ),
     );
+  }
+
+  Widget _wxIpAddress() {
+    return (Text(
+      _host ?? '',
+      style: const TextStyle(
+        fontSize: 16,
+        color: Colors.green,
+        fontWeight: FontWeight.w600,
+      ),
+    ));
   }
 
   Widget _wxExportButton() {
@@ -94,20 +112,55 @@ class _HomePageState extends State<HomePage> {
         strokeWidth: 3,
         dashPattern: const [10, 6],
         radius: const Radius.circular(10),
-        child: Container(color: Colors.green[50], child: const Center(child: Icon(Icons.add, size: 60))),
+        child: Container(
+            color: Colors.green[50],
+            child: const Center(child: Icon(Icons.add, size: 60))),
       ),
     );
   }
 
   Widget _wxMockSetCard(int i) {
+    final url = _host == null ? null : (_host! + _mockSets[i].name);
+
     return Container(
         color: Colors.amber[50],
         child: Column(
           children: [
             const SizedBox(height: 20),
-            Text(
-              _mockSets[i].name,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const SizedBox(width: 30),
+                Text(
+                  _mockSets[i].name,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 20),
+                ),
+                SizedBox(
+                  width: 30,
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.copy,
+                      size: 18,
+                      color: Colors.grey[600],
+                    ),
+                    onPressed: () async {
+                      if (url != null) {
+                        await Clipboard.setData(ClipboardData(text: url));
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text(
+                            'Đã sao chép "$url"',
+                            style: const TextStyle(fontSize: 16),
+                            textAlign: TextAlign.center,
+                          ),
+                          duration: const Duration(seconds: 2),
+                        ));
+                      }
+                    },
+                    tooltip: url,
+                  ),
+                ),
+              ],
             ),
             Expanded(
               child: SingleChildScrollView(
@@ -125,6 +178,7 @@ class _HomePageState extends State<HomePage> {
                         secondary: IconButton(
                           icon: const Icon(Icons.edit),
                           onPressed: () => _onEditEndpoint(i, e.key),
+                          tooltip: 'Sửa JSON',
                         ),
                       ),
                   ]),
@@ -136,8 +190,11 @@ class _HomePageState extends State<HomePage> {
               children: [
                 IconButton(
                   icon: Icon(
-                    _mockSets[i].disable ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                    color: _mockSets[i].disable ? Colors.yellow[900] : Colors.grey,
+                    _mockSets[i].disable
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
+                    color:
+                        _mockSets[i].disable ? Colors.yellow[900] : Colors.grey,
                     size: 30,
                   ),
                   onPressed: () {
@@ -201,7 +258,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   _onPickExportFolder() async {
-    _exportFolder = await FilePicker.platform.getDirectoryPath(dialogTitle: 'Chọn thư mục xuất file JSON');
+    _exportFolder = await FilePicker.platform
+        .getDirectoryPath(dialogTitle: 'Chọn thư mục xuất file JSON');
     if (_exportFolder != null) {
       _exportFolder = _exportFolder! + Utils.pathSep;
     }
@@ -209,8 +267,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   _onAddMockSet() async {
-    final result = await FilePicker.platform.pickFiles(allowMultiple: true, allowedExtensions: ['json'],
-    dialogTitle: 'Chọn tập tin JSON');
+    final result = await FilePicker.platform.pickFiles(
+        allowMultiple: true,
+        allowedExtensions: ['json'],
+        dialogTitle: 'Chọn tập tin JSON');
     await _addMockSet(result?.paths);
   }
 
@@ -231,7 +291,8 @@ class _HomePageState extends State<HomePage> {
 
   _export() async {
     if (_exportFolder == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Chưa chọn thư mục xuất file')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Chưa chọn thư mục xuất file')));
       return;
     }
 
@@ -244,7 +305,8 @@ class _HomePageState extends State<HomePage> {
       }
       final text = Utils.formatJson(result);
 
-      final exportFile = File(_exportFolder! + _exportNameController.text + '.json');
+      final exportFile =
+          File(_exportFolder! + _exportNameController.text + '.json');
 
       await exportFile.writeAsString(text);
     } catch (e) {
@@ -323,7 +385,8 @@ class _HomePageState extends State<HomePage> {
                 child: Text('Lưu'),
               ),
               style: TextButton.styleFrom(
-                textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                textStyle:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
               ),
               onPressed: () {
                 _mockSets[i].endpoints[key] = jsonDecode(edittedJson);
