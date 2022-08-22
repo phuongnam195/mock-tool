@@ -41,8 +41,8 @@ Công cụ hỗ trợ quản lý nhiều Mock API cùng [json_server](https://gi
 
 ## Screenshot
 
-![image](https://user-images.githubusercontent.com/90912187/185653214-adc070e4-2889-4745-a5c3-61fd31850463.png)
-![image](https://user-images.githubusercontent.com/90912187/185653769-151969ba-8126-4212-9c79-cdfdde54c2d8.png)
+![image](https://user-images.githubusercontent.com/90912187/185856942-50cb0a93-eb44-467f-be94-075693c5167c.png)
+![image](https://user-images.githubusercontent.com/90912187/185856963-972cf7e2-d8ff-40a2-9650-6a397a637a52.png)
 
 # English version
 
