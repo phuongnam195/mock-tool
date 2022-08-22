@@ -1,5 +1,5 @@
 # Mock Tool
-**[English below](https://github.com/phuongnam195/mock-tool/edit/main/README.md#english-version)**
+**[English below](https://github.com/phuongnam195/mock-tool#english-version)**
 
 Công cụ hỗ trợ quản lý nhiều Mock API cùng [json_server](https://github.com/typicode/json-server)
 
