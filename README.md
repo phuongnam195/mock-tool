@@ -4,7 +4,7 @@
 Công cụ hỗ trợ quản lý nhiều Mock API cùng [json_server](https://github.com/typicode/json-server)
 
 ## Cách dùng
-1. Cài đặt [JSON Server](https://github.com/typicode/json-server)
+1. Cài đặt [JSON Server](https://github.com/typicode/json-server): `npm install -g json-server`
 2. Cài đặt [Mock Tool](https://github.com/phuongnam195/mock-tool/releases) hoặc chạy mã nguồn
 3. Chạy Json Server: `json-server --host <địa chỉ IP wifi> --watch <tên file xuất>.json`
 4. Mở Mock Tool, chọn thư mục xuất và nhập tên file xuất (.json)
@@ -49,7 +49,7 @@ Công cụ hỗ trợ quản lý nhiều Mock API cùng [json_server](https://gi
 A small tool to manage multiple mock APIs with [json_server](https://github.com/typicode/json-server)
 
 ## How to use
-1. Install [JSON Server](https://github.com/typicode/json-server)
+1. Install [JSON Server](https://github.com/typicode/json-server): `npm install -g json-server`
 2. Install [Mock Tool](https://github.com/phuongnam195/mock-tool/releases) or run source code
 3. Run Json Server: `json-server --host <wifi ip address> --watch <export file name>.json`
 4. Select export directory and enter the name of export file (.json)
